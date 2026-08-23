@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: sactions-service
+
+open-sanctions:
+  api-key: ${OPENSANCTIONS_API_KEY:ca83046aa24315015ed3832290ef213d}
+  algorithm: logic-v2
+  threshold: 0.8
+  topics: sanction,sanction.linked,debarment,role.pep
