@@ -1,6 +1,6 @@
-package com.codify.sactionsservice.tenant.dto;
+package com.codify.sactionsservice.tenant.api.dto;
 
-import com.codify.sactionsservice.tenant.TenantType;
+import com.codify.sactionsservice.tenant.domain.TenantType;
 
 import java.util.Map;
 

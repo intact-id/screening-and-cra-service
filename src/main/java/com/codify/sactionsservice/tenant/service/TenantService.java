@@ -1,9 +1,11 @@
-package com.codify.sactionsservice.tenant;
+package com.codify.sactionsservice.tenant.service;
 
-import com.codify.sactionsservice.tenant.dto.TenantCreationDto;
-import com.codify.sactionsservice.tenant.dto.TenantResponseDto;
-import com.codify.sactionsservice.tenant.dto.TenantUpdateRequestDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantCreationDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantResponseDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantUpdateRequestDto;
 import com.codify.sactionsservice.common.exception.ApplicationException;
+import com.codify.sactionsservice.tenant.domain.Tenant;
+import com.codify.sactionsservice.tenant.repository.TenantRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

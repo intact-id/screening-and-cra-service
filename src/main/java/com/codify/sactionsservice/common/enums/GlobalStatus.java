@@ -26,8 +26,7 @@ public enum GlobalStatus {
     ON_HOLD("Verification is temporarily held, awaiting manual release before the scheduler can retry it"),
     ARCHIVED("Entity or record is stored for historical purposes"),
     UNKNOWN("Status is unknown or not set"),
-    CLOSED("entity or business or service has been closed"),
-    ;
+    CLOSED("entity or business or service has been closed");
 
 
     private final String description;

@@ -1,10 +1,11 @@
-package com.codify.sactionsservice.tenant;
+package com.codify.sactionsservice.tenant.api;
 
 import com.codify.sactionsservice.common.ApiResult;
-import com.codify.sactionsservice.tenant.dto.TenantCreationDto;
-import com.codify.sactionsservice.tenant.dto.TenantResponseDto;
-import com.codify.sactionsservice.tenant.dto.TenantUpdateRequestDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantCreationDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantResponseDto;
+import com.codify.sactionsservice.tenant.api.dto.TenantUpdateRequestDto;
 import com.codify.sactionsservice.common.web.ControllerUtil;
+import com.codify.sactionsservice.tenant.service.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.codify.sactionsservice.tenant;
+package com.codify.sactionsservice.tenant.domain;
 
 public enum TenantType {
     SERVICE("This identifies internal services"),
