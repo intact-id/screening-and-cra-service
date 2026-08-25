@@ -1,6 +1,12 @@
 spring:
   application:
     name: sactions-service
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
 
 open-sanctions:
   api-key: ${OPENSANCTIONS_API_KEY:ca83046aa24315015ed3832290ef213d}

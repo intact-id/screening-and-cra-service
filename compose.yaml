@@ -1,1 +1,9 @@
-services: { }
+services:
+  postgres:
+    image: 'postgres:17'
+    environment:
+      - 'POSTGRES_DB=sactions_service'
+      - 'POSTGRES_USER=sactions_service'
+      - 'POSTGRES_PASSWORD=sactions_service'
+    ports:
+      - '5432:5432'
