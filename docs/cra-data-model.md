@@ -103,7 +103,7 @@ erDiagram
         json condition
         enum forceLevel
         string reason
-    }
+    } 
     RISK_ASSESSMENT {
         uuid id PK
         uuid tenantId FK
