@@ -232,6 +232,7 @@ is the unit of reproducibility — an assessment always pins to a specific
 | `createdBy` | `string` | For change governance (maker) |
 | `approvedBy` | `string` | For change governance (checker) |
 | `createdAt` | `timestamp` | |
+~~~~
 
 **Invariant:** immutable once `ACTIVE`. Editing an active model produces a new
 `DRAFT` version; activating that draft retires the previously-active version

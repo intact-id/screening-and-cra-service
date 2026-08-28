@@ -1,7 +1,7 @@
 package com.codify.sactionsservice.risk.domain;
 
 public enum RiskLevel {
-    HIGH,
+    LOW,
     MEDIUM,
-    LOW
+    HIGH
 }
