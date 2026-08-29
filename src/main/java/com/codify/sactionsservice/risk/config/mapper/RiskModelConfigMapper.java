@@ -20,11 +20,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Builds the persisted entity graph from a validated {@link RiskModelConfig}.
- * Only ever called after {@code RiskModelConfigValidator} has passed — this
- * class trusts the shape it's given and does no validation of its own.
- */
 @Component
 public class RiskModelConfigMapper {
 

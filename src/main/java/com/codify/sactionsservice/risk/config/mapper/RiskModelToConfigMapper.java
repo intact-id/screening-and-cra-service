@@ -17,13 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Reverses {@link RiskModelConfigMapper#toEntity}. Used by
- * {@code RiskModelService.activate()} to re-run
- * {@code RiskModelConfigValidator.validateForActivation} against an
- * already-persisted {@link RiskModel} — the sanctions-override guardrail is a
- * warning at draft time but a hard block at activation, so it must be re-checked.
- */
 @Component
 public class RiskModelToConfigMapper {
 

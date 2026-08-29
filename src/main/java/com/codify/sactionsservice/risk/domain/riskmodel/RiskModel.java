@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -35,17 +36,20 @@ public class RiskModel extends PO {
     @Enumerated(EnumType.STRING)
     private CombineMethod combineMethod;
 
+    @Column(name = "effective_from")
+    private LocalDateTime effectiveFrom;
+
     @ManyToOne
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
-    @OneToMany(mappedBy = "riskModel")
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
     private List<OverrideRule> overrideRules;
 
-    @OneToMany(mappedBy = "riskModel")
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
     private List<Threshold> thresholds;
 
-    @OneToMany(mappedBy = "riskModel")
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
     private List<Category> categories;
 
 }

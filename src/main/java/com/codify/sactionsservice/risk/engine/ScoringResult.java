@@ -9,6 +9,7 @@ public record ScoringResult(
         BigDecimal overallScore,
         RiskLevel overallLevel,
         boolean overrideApplied,
+        boolean incomplete,
         List<CategoryScoreResult> categoryResults,
         List<ContributionLineResult> contributionLines,
         List<OverrideEvaluationResult> overrideEvaluations

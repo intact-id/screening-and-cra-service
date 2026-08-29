@@ -6,7 +6,8 @@ import com.codify.sactionsservice.risk.config.dto.OverrideRuleConfig;
 import com.codify.sactionsservice.risk.config.dto.RiskModelConfig;
 import com.codify.sactionsservice.risk.config.dto.ThresholdConfig;
 import com.codify.sactionsservice.risk.config.dto.ValueScoreRuleConfig;
-import com.codify.sactionsservice.risk.domain.RiskLevel;
+import com.codify.sactionsservice.risk.domain.ReservedAttributeKeys;
+import com.codify.sactionsservice.risk.domain.overriderule.ForceLevel;
 import com.codify.sactionsservice.risk.domain.attribute.MissingBehavior;
 import com.codify.sactionsservice.risk.domain.attributedefinition.AttributeDefinition;
 import com.codify.sactionsservice.risk.domain.riskmodel.CustomerType;
@@ -27,7 +28,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RiskModelConfigValidator {
 
-    private static final String SANCTIONS_KEY = "sanctions";
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final AttributeDefinitionRepo attributeDefinitionRepo;
@@ -185,13 +185,9 @@ public class RiskModelConfigValidator {
             OverrideRuleConfig rule = rules.get(i);
             String rulePath = "overrideRules[" + i + "]";
 
-            if (rule.forceLevel() == RiskLevel.LOW) {
-                errors.add(new ValidationError(rulePath + ".forceLevel", "An override rule can never force LOW"));
-            }
-
             if (rule.condition() != null) {
                 validateConditionAttributeReferences(rule.condition(), configuredAttributeKeys, rulePath + ".condition", errors);
-                if (rule.forceLevel() == RiskLevel.HIGH && referencesConfirmedSanctionsMatch(rule.condition())) {
+                if (rule.forceLevel() == ForceLevel.HIGH && referencesConfirmedSanctionsMatch(rule.condition())) {
                     hasSanctionsGuardrail = true;
                 }
             }
@@ -205,7 +201,7 @@ public class RiskModelConfigValidator {
                                                         String path, List<ValidationError> errors) {
         Object attribute = condition.get("attribute");
         if (attribute instanceof String key) {
-            if (!SANCTIONS_KEY.equals(key) && !configuredAttributeKeys.contains(key)) {
+            if (!ReservedAttributeKeys.SANCTIONS.equals(key) && !configuredAttributeKeys.contains(key)) {
                 errors.add(new ValidationError(path + ".attribute", "Condition references unknown attribute key: " + key));
             }
             return;
@@ -227,7 +223,7 @@ public class RiskModelConfigValidator {
     private boolean referencesConfirmedSanctionsMatch(Map<String, Object> condition) {
         Object attribute = condition.get("attribute");
         if (attribute != null) {
-            return SANCTIONS_KEY.equals(attribute)
+            return ReservedAttributeKeys.SANCTIONS.equals(attribute)
                     && "eq".equals(condition.get("op"))
                     && "CONFIRMED_MATCH".equals(condition.get("value"));
         }

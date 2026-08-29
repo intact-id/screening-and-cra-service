@@ -1,6 +1,9 @@
 package com.codify.sactionsservice.risk.service;
 
+import com.codify.sactionsservice.common.FieldError;
 import com.codify.sactionsservice.common.exception.ApplicationException;
+import com.codify.sactionsservice.risk.api.dto.RiskModelResponseDto;
+import com.codify.sactionsservice.risk.api.mapper.RiskModelResponseMapper;
 import com.codify.sactionsservice.risk.config.dto.RiskModelConfig;
 import com.codify.sactionsservice.risk.config.mapper.RiskModelConfigMapper;
 import com.codify.sactionsservice.risk.config.mapper.RiskModelSnapshotMapper;
@@ -21,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,14 +38,15 @@ public class RiskModelService {
     private final RiskModelConfigMapper configMapper;
     private final RiskModelToConfigMapper toConfigMapper;
     private final RiskModelSnapshotMapper snapshotMapper;
+    private final RiskModelResponseMapper responseMapper;
 
     @Transactional
-    public RiskModel createDraft(String tenantId, RiskModelConfig config) {
+    public RiskModelResponseDto createDraft(String tenantId, RiskModelConfig config) {
         ValidationResult result = validator.validateForDraft(config);
         if (!result.isValid()) {
             log.warn("Rejected RiskModel draft: tenantId={} errors={}", tenantId, result.errors());
             throw new ApplicationException.ValidationException(
-                    "Risk model configuration is invalid: " + result.errors());
+                    "Risk model configuration is invalid", toFieldErrors(result));
         }
 
         Tenant tenant = tenantRepo.findById(tenantId)
@@ -59,11 +66,11 @@ public class RiskModelService {
         log.info("Created RiskModel draft id={} tenantId={} customerType={} version={}",
                 saved.getId(), tenantId, config.customerType(), nextVersion);
 
-        return saved;
+        return responseMapper.toDto(saved);
     }
 
     @Transactional
-    public RiskModel activate(String riskModelId) {
+    public RiskModelResponseDto activate(String riskModelId) {
         RiskModel riskModel = riskModelRepo.findById(riskModelId)
                 .orElseThrow(() -> {
                     log.warn("RiskModel not found: riskModelId={}", riskModelId);
@@ -81,7 +88,7 @@ public class RiskModelService {
         if (!result.isValid()) {
             log.warn("Refused to activate RiskModel: riskModelId={} errors={}", riskModelId, result.errors());
             throw new ApplicationException.ValidationException(
-                    "Risk model cannot be activated: " + result.errors());
+                    "Risk model cannot be activated", toFieldErrors(result));
         }
 
         riskModelRepo.findByTenant_IdAndCustomerTypeAndLifeCycleStatus(
@@ -92,12 +99,13 @@ public class RiskModelService {
                 });
 
         riskModel.setLifeCycleStatus(LifeCycleStatus.ACTIVE);
+        riskModel.setEffectiveFrom(LocalDateTime.now());
         RiskModel saved = riskModelRepo.save(riskModel);
 
         log.info("Activated RiskModel id={} tenantId={} customerType={} version={}",
                 saved.getId(), riskModel.getTenant().getId(), riskModel.getCustomerType(), riskModel.getVersion());
 
-        return saved;
+        return responseMapper.toDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -110,5 +118,11 @@ public class RiskModelService {
                 });
 
         return snapshotMapper.toSnapshot(riskModel);
+    }
+
+    private List<FieldError> toFieldErrors(ValidationResult result) {
+        return result.errors().stream()
+                .map(error -> new FieldError(error.field(), error.message()))
+                .toList();
     }
 }

@@ -40,9 +40,9 @@ public class Category extends PO {
     @JoinColumn(name = "risk_model_id")
     private RiskModel riskModel;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Threshold> thresholds;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Attribute> attributes;
 }

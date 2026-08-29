@@ -2,6 +2,8 @@ package com.codify.sactionsservice.common;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -12,4 +14,5 @@ public class ApiResult<T> {
     private String status;
     private String message;
     private Boolean isTechnical;
+    private List<FieldError> errors;
 }

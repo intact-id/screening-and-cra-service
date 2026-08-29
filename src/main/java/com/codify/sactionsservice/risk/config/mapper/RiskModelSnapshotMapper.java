@@ -17,12 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Freezes a loaded {@link RiskModel} entity graph into the plain,
- * JPA-free {@link RiskModelSnapshot} the scoring engine (risk.engine) consumes.
- * This is the one place JPA touches the engine boundary — call it inside the
- * transaction that loaded the entity graph.
- */
 @Component
 public class RiskModelSnapshotMapper {
 

@@ -1,6 +1,10 @@
 spring:
   application:
     name: sactions-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sactions_service}
+    username: ${DB_USERNAME:sactions_service}
+    password: ${DB_PASSWORD:sactions_service}
   jpa:
     hibernate:
       ddl-auto: validate

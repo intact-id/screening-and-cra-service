@@ -25,6 +25,7 @@ public class TenantController extends ControllerUtil {
                 () -> tenantService.createTenant(tenantCreationDto),
                 log,
                 "Tenant created successfully",
+                "not found",
                 "validation failed",
                 "failed to create tenant"
         );

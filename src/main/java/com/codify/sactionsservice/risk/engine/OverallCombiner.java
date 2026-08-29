@@ -31,10 +31,11 @@ public final class OverallCombiner {
 
         for (OverrideRuleSnapshot rule : model.overrideRules()) {
             boolean triggered = OverrideEvaluator.evaluate(rule.condition(), payload);
-            evaluations.add(new OverrideEvaluationResult(rule.id(), triggered, rule.forceLevel()));
+            RiskLevel candidateLevel = rule.forceLevel().toRiskLevel();
+            evaluations.add(new OverrideEvaluationResult(rule.id(), triggered, candidateLevel));
 
-            if (triggered && rule.forceLevel().ordinal() > finalLevel.ordinal()) {
-                finalLevel = rule.forceLevel();
+            if (triggered && candidateLevel.ordinal() > finalLevel.ordinal()) {
+                finalLevel = candidateLevel;
             }
         }
 

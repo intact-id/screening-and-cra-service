@@ -2,7 +2,6 @@ package com.codify.sactionsservice.risk.domain.overriderule;
 
 import com.codify.sactionsservice.common.PO;
 import com.codify.sactionsservice.common.converter.PgJsonbToMapConverter;
-import com.codify.sactionsservice.risk.domain.RiskLevel;
 import com.codify.sactionsservice.risk.domain.riskmodel.RiskModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,7 +23,7 @@ import java.util.Map;
 public class OverrideRule extends PO {
 
     @Enumerated(EnumType.STRING)
-    private RiskLevel forceLevel;
+    private ForceLevel forceLevel;
 
     @Convert(converter = PgJsonbToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)

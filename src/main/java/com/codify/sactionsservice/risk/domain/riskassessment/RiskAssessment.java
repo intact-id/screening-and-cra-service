@@ -56,6 +56,9 @@ public class RiskAssessment extends PO {
 
     private Boolean overrideApplied;
 
+    @Enumerated(EnumType.STRING)
+    private TriggeredBy triggeredBy;
+
     @Convert(converter = PgJsonbToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "input_snapshot", columnDefinition = "jsonb")
@@ -66,10 +69,15 @@ public class RiskAssessment extends PO {
     @Column(name = "fx_snapshot", columnDefinition = "jsonb")
     private Map<String, Object> fxSnapshot;
 
-    @OneToMany(mappedBy = "assessment")
+    @Convert(converter = PgJsonbToMapConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "screening_snapshot", columnDefinition = "jsonb")
+    private Map<String, Object> screeningSnapshot;
+
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     private List<CategoryResult> categoryResults;
 
-    @OneToMany(mappedBy = "assessment")
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     private List<ContributionLine> contributionLines;
 
 }

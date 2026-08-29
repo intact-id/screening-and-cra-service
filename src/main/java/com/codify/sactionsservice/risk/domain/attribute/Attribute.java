@@ -3,6 +3,7 @@ package com.codify.sactionsservice.risk.domain.attribute;
 import com.codify.sactionsservice.common.PO;
 import com.codify.sactionsservice.risk.domain.attribute.valuescorerule.ValueScoreRule;
 import com.codify.sactionsservice.risk.domain.category.Category;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -41,6 +42,6 @@ public class Attribute extends PO {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "attribute")
+    @OneToMany(mappedBy = "attribute", cascade = CascadeType.ALL)
     private List<ValueScoreRule> rules;
 }

@@ -1,8 +1,11 @@
 package com.codify.sactionsservice.common.exception;
 
 
+import com.codify.sactionsservice.common.FieldError;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.util.List;
 
 public class ApplicationException {
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -14,8 +17,15 @@ public class ApplicationException {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public static class ValidationException extends RuntimeException {
-        public ValidationException(String message) {
+        private final List<FieldError> errors;
+
+        public ValidationException(String message, List<FieldError> errors) {
             super(message);
+            this.errors = errors;
+        }
+
+        public List<FieldError> getErrors() {
+            return errors;
         }
     }
 }

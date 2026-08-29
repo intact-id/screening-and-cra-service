@@ -22,6 +22,7 @@ public final class CategoryRollup {
     public static CategoryRollupResult rollup(CategorySnapshot category, AttributePayload payload) {
         List<ContributionLineResult> contributionLines = new ArrayList<>();
         List<WeightedPoints> weightedPoints = new ArrayList<>();
+        boolean incomplete = false;
 
         for (AttributeSnapshot attribute : category.attributes()) {
             AttributeScoreResult result = AttributeScorer.score(attribute, payload);
@@ -44,6 +45,7 @@ public final class CategoryRollup {
             ));
 
             weightedPoints.add(new WeightedPoints(points, weightApplied, weightedPointsValue));
+            incomplete = incomplete || result.incomplete();
         }
 
         BigDecimal categoryScore = switch (category.rollupMethod()) {
@@ -57,7 +59,8 @@ public final class CategoryRollup {
 
         return new CategoryRollupResult(
                 new CategoryScoreResult(category.key(), categoryScore, categoryLevel),
-                contributionLines
+                contributionLines,
+                incomplete
         );
     }
 
