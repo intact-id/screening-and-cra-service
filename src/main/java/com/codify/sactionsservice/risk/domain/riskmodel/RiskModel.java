@@ -43,13 +43,13 @@ public class RiskModel extends PO {
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
-    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OverrideRule> overrideRules;
 
-    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Threshold> thresholds;
 
-    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "riskModel", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> categories;
 
 }
