@@ -6,6 +6,7 @@ import com.codify.sactionsservice.risk.domain.riskmodel.RiskModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,4 +17,6 @@ public interface RiskModelRepo extends JpaRepository<RiskModel, String> {
 
     Optional<RiskModel> findTopByTenant_IdAndCustomerTypeOrderByVersionDesc(
             String tenantId, CustomerType customerType);
+
+    List<RiskModel> findAllByTenant_IdOrderByCustomerTypeAscVersionDesc(String tenantId);
 }

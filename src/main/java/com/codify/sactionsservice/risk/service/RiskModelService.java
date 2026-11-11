@@ -2,7 +2,9 @@ package com.codify.sactionsservice.risk.service;
 
 import com.codify.sactionsservice.common.FieldError;
 import com.codify.sactionsservice.common.exception.ApplicationException;
+import com.codify.sactionsservice.risk.api.dto.RiskModelDetailResponseDto;
 import com.codify.sactionsservice.risk.api.dto.RiskModelResponseDto;
+import com.codify.sactionsservice.risk.api.dto.ValidationResponseDto;
 import com.codify.sactionsservice.risk.api.mapper.RiskModelResponseMapper;
 import com.codify.sactionsservice.risk.config.dto.RiskModelConfig;
 import com.codify.sactionsservice.risk.config.mapper.RiskModelConfigMapper;
@@ -118,6 +120,122 @@ public class RiskModelService {
                 });
 
         return snapshotMapper.toSnapshot(riskModel);
+    }
+
+    @Transactional(readOnly = true)
+    public RiskModelDetailResponseDto getById(String riskModelId) {
+        RiskModel riskModel = findOrThrow(riskModelId);
+        return responseMapper.toDetailDto(riskModel, toConfigMapper.toConfig(riskModel));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RiskModelResponseDto> list(String tenantId, CustomerType customerType, LifeCycleStatus status) {
+        if (!tenantRepo.existsById(tenantId)) {
+            log.warn("Tenant not found: tenantId={}", tenantId);
+            throw new ApplicationException.ResourceNotFoundException("Tenant not found");
+        }
+
+        return riskModelRepo.findAllByTenant_IdOrderByCustomerTypeAscVersionDesc(tenantId).stream()
+                .filter(riskModel -> customerType == null || riskModel.getCustomerType() == customerType)
+                .filter(riskModel -> status == null || riskModel.getLifeCycleStatus() == status)
+                .map(responseMapper::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public RiskModelDetailResponseDto getActiveConfig(String tenantId, CustomerType customerType) {
+        RiskModel riskModel = riskModelRepo.findByTenant_IdAndCustomerTypeAndLifeCycleStatus(
+                        tenantId, customerType, LifeCycleStatus.ACTIVE)
+                .orElseThrow(() -> {
+                    log.warn("No ACTIVE risk model found: tenantId={} customerType={}", tenantId, customerType);
+                    return new ApplicationException.ResourceNotFoundException("No active risk model found");
+                });
+
+        return responseMapper.toDetailDto(riskModel, toConfigMapper.toConfig(riskModel));
+    }
+
+    @Transactional
+    public RiskModelDetailResponseDto updateDraft(String riskModelId, RiskModelConfig config) {
+        RiskModel riskModel = findOrThrow(riskModelId);
+        requireDraft(riskModel, "updated");
+
+        if (config.customerType() != riskModel.getCustomerType()) {
+            log.warn("Rejected customerType change on RiskModel draft: riskModelId={} from={} to={}",
+                    riskModelId, riskModel.getCustomerType(), config.customerType());
+            throw new ApplicationException.ValidationException("Risk model configuration is invalid",
+                    List.of(new FieldError("customerType", "customerType cannot be changed on an existing draft")));
+        }
+
+        ValidationResult result = validator.validateForDraft(config);
+        if (!result.isValid()) {
+            log.warn("Rejected RiskModel draft update: riskModelId={} errors={}", riskModelId, result.errors());
+            throw new ApplicationException.ValidationException(
+                    "Risk model configuration is invalid", toFieldErrors(result));
+        }
+
+        riskModel.getCategories().clear();
+        riskModel.getThresholds().clear();
+        riskModel.getOverrideRules().clear();
+        riskModelRepo.flush();
+
+        configMapper.populate(riskModel, config);
+        RiskModel saved = riskModelRepo.save(riskModel);
+
+        log.info("Updated RiskModel draft id={} version={}", saved.getId(), saved.getVersion());
+
+        return responseMapper.toDetailDto(saved, toConfigMapper.toConfig(saved));
+    }
+
+    @Transactional
+    public RiskModelResponseDto deleteDraft(String riskModelId) {
+        RiskModel riskModel = findOrThrow(riskModelId);
+        requireDraft(riskModel, "deleted");
+
+        RiskModelResponseDto deleted = responseMapper.toDto(riskModel);
+        riskModelRepo.delete(riskModel);
+
+        log.info("Deleted RiskModel draft id={} version={}", riskModelId, riskModel.getVersion());
+
+        return deleted;
+    }
+
+    @Transactional
+    public RiskModelResponseDto cloneToDraft(String riskModelId) {
+        RiskModel source = findOrThrow(riskModelId);
+        RiskModelResponseDto created = createDraft(source.getTenant().getId(), toConfigMapper.toConfig(source));
+
+        log.info("Cloned RiskModel sourceId={} sourceVersion={} into draftId={} version={}",
+                riskModelId, source.getVersion(), created.id(), created.version());
+
+        return created;
+    }
+
+    public ValidationResponseDto validate(RiskModelConfig config, boolean forActivation) {
+        ValidationResult result = forActivation
+                ? validator.validateForActivation(config)
+                : validator.validateForDraft(config);
+
+        List<FieldError> warnings = result.warnings().stream()
+                .map(warning -> new FieldError(warning.field(), warning.message()))
+                .toList();
+
+        return new ValidationResponseDto(result.isValid(), toFieldErrors(result), warnings);
+    }
+
+    private RiskModel findOrThrow(String riskModelId) {
+        return riskModelRepo.findById(riskModelId)
+                .orElseThrow(() -> {
+                    log.warn("RiskModel not found: riskModelId={}", riskModelId);
+                    return new ApplicationException.ResourceNotFoundException("Risk model not found");
+                });
+    }
+
+    private void requireDraft(RiskModel riskModel, String action) {
+        if (riskModel.getLifeCycleStatus() != LifeCycleStatus.DRAFT) {
+            log.warn("Refused to modify RiskModel not in DRAFT: riskModelId={} status={} action={}",
+                    riskModel.getId(), riskModel.getLifeCycleStatus(), action);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a DRAFT risk model can be " + action);
+        }
     }
 
     private List<FieldError> toFieldErrors(ValidationResult result) {

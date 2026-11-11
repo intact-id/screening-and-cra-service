@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +29,37 @@ public class AssessmentController extends ControllerUtil {
                 "no active risk model found while running assessment",
                 "validation failed while running assessment",
                 "failed to run assessment"
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResult<List<AssessmentResponseDto>>> listForCustomer(
+            @RequestParam String tenantId,
+            @RequestParam String customerId) {
+        return handleGet(
+                () -> assessmentService.listForCustomer(tenantId, customerId),
+                log,
+                customerId,
+                "Assessments fetched successfully",
+                "no assessments: customerId={} reason={}",
+                "failed to list assessments: customerId={} reason={}"
+        );
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<ApiResult<AssessmentResponseDto>> getCurrent(
+            @RequestParam String tenantId,
+            @RequestParam String customerId,
+            @RequestParam(name = "include", required = false) String include) {
+        boolean includeBreakdown = "breakdown".equalsIgnoreCase(include);
+
+        return handleGet(
+                () -> assessmentService.getCurrent(tenantId, customerId, includeBreakdown),
+                log,
+                customerId,
+                "Current assessment fetched successfully",
+                "no current assessment: customerId={} reason={}",
+                "failed to fetch current assessment: customerId={} reason={}"
         );
     }
 
