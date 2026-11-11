@@ -86,6 +86,24 @@ public class AssessmentService {
         return responseMapper.toDto(assessment, includeBreakdown);
     }
 
+    /** A customer's assessment history, newest first. Breakdown lines are left out to keep the list small. */
+    @Transactional(readOnly = true)
+    public List<AssessmentResponseDto> listForCustomer(String tenantId, String customerId) {
+        return riskAssessmentRepo.findByTenant_IdAndCustomerIdOrderByCreatedAtDesc(tenantId, customerId)
+                .stream()
+                .map(assessment -> responseMapper.toDto(assessment, false))
+                .toList();
+    }
+
+    /** The customer's current risk level: their latest assessment. */
+    @Transactional(readOnly = true)
+    public AssessmentResponseDto getCurrent(String tenantId, String customerId, boolean includeBreakdown) {
+        return riskAssessmentRepo.findTopByTenant_IdAndCustomerIdOrderByCreatedAtDesc(tenantId, customerId)
+                .map(assessment -> responseMapper.toDto(assessment, includeBreakdown))
+                .orElseThrow(() -> new ApplicationException.ResourceNotFoundException(
+                        "No assessment found for this customer"));
+    }
+
     private ScreeningResult screenCustomer(AssessmentRequestDto request) {
         return switch (request.customerType()) {
             case INDIVIDUAL -> {
