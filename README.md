@@ -96,16 +96,31 @@ with environment variables.
 | `DB_URL` | `jdbc:postgresql://localhost:5432/sactions_service` | JDBC URL |
 | `DB_USERNAME` | `sactions_service` | DB user |
 | `DB_PASSWORD` | `sactions_service` | DB password |
-| `OPENSANCTIONS_API_KEY` | *(dev key in yaml — see Known gaps)* | OpenSanctions API key |
+| `OPENSANCTIONS_API_KEY` | *(none — required for the hosted engine)* | OpenSanctions API key |
+| `OPENSANCTIONS_DEFAULT_ENGINE` | `OPENSANCTIONS` | Engine used when a request doesn't pick one |
+| `YENTE_BASE_URL` | `http://localhost:8002` | Self-hosted yente |
+| `YENTE_ALGORITHM` | `logic-v2` | yente matching algorithm |
+| `MOTIVA_BASE_URL` | `http://localhost:8001` | Self-hosted motiva |
+| `MOTIVA_ALGORITHM` | `logic-v1` | motiva matching algorithm (it has no `logic-v2`) |
 | `SERVER_PORT` | `8080` | HTTP port |
 
 OpenSanctions matching options (`application.yaml → open-sanctions`):
 
 | Key | Value | Meaning |
 |---|---|---|
-| `algorithm` | `logic-v2` | OpenSanctions matching algorithm |
+| `algorithm` | `logic-v2` | Matching algorithm for the hosted API |
 | `threshold` | `0.8` | Minimum score for a result to count as a match |
 | `topics` | `sanction, sanction.linked, debarment, role.pep` | Lists searched |
+
+### Screening engines
+
+| Engine | What it is | Key |
+|---|---|---|
+| `OPENSANCTIONS` (default) | Hosted API at api.opensanctions.org — all datasets, incl. global PEPs | Yes |
+| `YENTE` | Self-hosted yente on Elasticsearch — only the datasets in its manifest | No |
+| `MOTIVA` | Self-hosted Rust matcher on the same index — fast, low memory, no search | No |
+
+Screening endpoints take an optional `engine` query parameter. Assessments use the default engine.
 
 ---
 
@@ -114,8 +129,8 @@ OpenSanctions matching options (`application.yaml → open-sanctions`):
 ```
 com.codify.sactionsservice
 ├── screening/        OpenSanctions integration (complete, standalone)
-│   ├── api/          MatchController  →  /api/v1/match/*
-│   ├── client/       Feign client + request DTOs
+│   ├── api/          MatchController → /api/v1/match/*, ScreeningLookupController → /api/v1/screening/*
+│   ├── client/       Feign clients per engine (OpenSanctionsApi), ScreeningClient router, DTOs, enums
 │   └── service/      Person/Business match services, ScreeningResultMapper
 ├── risk/             CRA engine
 │   ├── api/          AssessmentController, RiskModelController
@@ -240,6 +255,8 @@ Lifecycle: `DRAFT → ACTIVE → RETIRED`. Only one ACTIVE model per tenant and 
 |---|---|---|
 | `POST` | `/v1/assessments` | Screen + score a customer |
 | `GET` | `/v1/assessments/{id}?include=breakdown` | Fetch an assessment (with contribution lines) |
+| `GET` | `/v1/assessments?tenantId=&customerId=` | A customer's assessment history, newest first |
+| `GET` | `/v1/assessments/current?tenantId=&customerId=` | The customer's current risk level (latest assessment) |
 
 ```json
 POST /v1/assessments
@@ -267,6 +284,9 @@ POST /v1/assessments
   (requires `businessIdentity: { "name", "jurisdiction" }`).
 - `triggeredBy`: `ONBOARDING`, `SCREENING_EVENT`, `PERIODIC`, `MANUAL`.
 - `sanctions`, `pep` and `adverse_media` are filled in from screening — don't send them.
+- `stage`: `ONBOARDING` scores only `ONBOARDING`-timing categories; `POST_ONBOARDING`
+  scores all of them, including screening. Override rules (e.g. confirmed sanctions → HIGH)
+  apply at both stages.
 
 ### Raw screening
 
@@ -275,8 +295,22 @@ POST /v1/assessments
 | `POST` | `/api/v1/match/person` | `{ "firstName", "lastName", "fatherName", "birthDate" }` |
 | `POST` | `/api/v1/match/business` | `{ "name", "jurisdiction" }` |
 
-Returns `{ "verdict": "...", "matches": [{ id, caption, score, datasets, topics, sourceUrls }] }`
+Both take `?engine=OPENSANCTIONS|YENTE|MOTIVA`. Returns
+`{ "verdict": "...", "matches": [{ id, caption, score, datasets, topics, sourceUrls }] }`
 directly (no envelope).
+
+### Screening lookups
+
+Read-only, returned as the engine sends them. All take `?engine=`.
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/screening/search?q=&schema=&countries=&topics=&limit=&offset=` | Name search (not on MOTIVA). `schema` and `topics` are enums, case-insensitive |
+| `GET` | `/api/v1/screening/entities/{id}` | Full entity record behind a match |
+| `GET` | `/api/v1/screening/catalog` | Loaded datasets and versions — shows how fresh the data is |
+| `GET` | `/api/v1/screening/algorithms` | Matching algorithms the engine supports |
+
+Search has no date-of-birth filter (the engines don't offer one); use `/match/person` with `birthDate`.
 
 ---
 
@@ -394,8 +428,6 @@ Required `.env` on the server: `DOCKERHUB_USERNAME`, `SERVER_PORT`,
 ## Known gaps
 
 - **No authentication** — all endpoints are open. Don't expose the service publicly yet.
-- **API key default** — `application.yaml` contains a fallback OpenSanctions key;
-  it should be removed and `OPENSANCTIONS_API_KEY` made mandatory.
 - **Adverse media is approximated** from screening topics (sanction, debarment,
   crime, etc.), so it can overlap with the sanctions signal.
 - **Engine errors** — a value with no matching rule and no `DEFAULT` rule, or a

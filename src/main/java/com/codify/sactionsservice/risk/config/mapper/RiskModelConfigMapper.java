@@ -17,6 +17,7 @@ import com.codify.sactionsservice.risk.domain.threshold.Threshold;
 import com.codify.sactionsservice.tenant.domain.Tenant;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,13 +32,22 @@ public class RiskModelConfigMapper {
                 .customerType(config.customerType())
                 .combineMethod(config.combineMethod())
                 .lifeCycleStatus(LifeCycleStatus.DRAFT)
+                .categories(new ArrayList<>())
+                .thresholds(new ArrayList<>())
+                .overrideRules(new ArrayList<>())
                 .build();
 
-        riskModel.setCategories(mapCategories(config.categories(), riskModel));
-        riskModel.setThresholds(mapThresholds(config.overallThresholds(), null, riskModel, OwnerType.MODEL));
-        riskModel.setOverrideRules(mapOverrideRules(config.overrideRules(), riskModel));
+        populate(riskModel, config);
 
         return riskModel;
+    }
+
+    public void populate(RiskModel riskModel, RiskModelConfig config) {
+        riskModel.setDescription(config.description());
+        riskModel.setCombineMethod(config.combineMethod());
+        riskModel.getCategories().addAll(mapCategories(config.categories(), riskModel));
+        riskModel.getThresholds().addAll(mapThresholds(config.overallThresholds(), null, riskModel, OwnerType.MODEL));
+        riskModel.getOverrideRules().addAll(mapOverrideRules(config.overrideRules(), riskModel));
     }
 
     private List<Category> mapCategories(List<CategoryConfig> configs, RiskModel riskModel) {

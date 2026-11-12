@@ -13,7 +13,19 @@ spring:
     locations: classpath:db/migration
 
 open-sanctions:
-  api-key: ${OPENSANCTIONS_API_KEY:ca83046aa24315015ed3832290ef213d}
+  # Engine used when a request does not choose one: OPENSANCTIONS (hosted, default), YENTE or MOTIVA.
+  default-engine: ${OPENSANCTIONS_DEFAULT_ENGINE:OPENSANCTIONS}
+  # Hosted OpenSanctions API (uses api-key, algorithm below).
+  base-url: ${OPENSANCTIONS_BASE_URL:https://api.opensanctions.org}
+  # Self-hosted yente server.
+  yente:
+    base-url: ${YENTE_BASE_URL:http://localhost:8002}
+    algorithm: ${YENTE_ALGORITHM:logic-v2}
+  # Self-hosted motiva (no logic-v2; supports logic-v1, name-based, name-qualified).
+  motiva:
+    base-url: ${MOTIVA_BASE_URL:http://localhost:8001}
+    algorithm: ${MOTIVA_ALGORITHM:logic-v1}
+  api-key: ${OPENSANCTIONS_API_KEY:}
   algorithm: logic-v2
   threshold: 0.8
   topics: sanction,sanction.linked,debarment,role.pep
